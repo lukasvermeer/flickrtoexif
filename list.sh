@@ -1,0 +1,1 @@
+exiftool -G -sep "--" -XMP:Description -IPTC:Caption-Abstract -IPTC:Keywords -XMP:Subject -GPSLongitude -GPSLongitudeRef -GPSLatitude -GPSLatitudeRef -XMP:GPSLongitude -XMP:GPSLatitude -EXIF:GPSAltitudeRef $1

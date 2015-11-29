@@ -13,11 +13,13 @@
 import argparse
 import subprocess
 import flickrapi
+import re
 
 api_key = 'a1dd0b738929c7da854234add4f6580c'
 api_secret = '0769e4c49cea4ca0'
 
 username = 'lukasvermeer' # You probably want to change this ...
+machine_title = re.compile('\d+_\d')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--auth', action='store_true')
@@ -53,6 +55,8 @@ for photo in args.__dict__['photos']:
 			if (t):
 				if subprocess.check_output(['exiftool','-XMP:Description','-IPTC:Caption-Abstract',photo]):
 					print '%s already has title data. SKIPPING to avoid overwriting.' % photo
+				elif machine_title.match(t):
+					print '%s looks like a machine generated title. SKIPPING.' % t
 				else:
 					print '%s writing title data: %s' % (photo, t)
 					# TODO Write all changes at once
@@ -62,11 +66,30 @@ for photo in args.__dict__['photos']:
 
 			if (matches[0][0].get('tags')):
 				tags = matches[0][0].get('tags').split(' ')
-				if subprocess.check_output(['exiftool', '-IPTC:Keywords', '-XMP:Subject', photo]):
-					# TODO Merge tags?
-					print '%s already has tag data. SKIPPING to avoid overwriting.'%photo
+				tags_check = subprocess.check_output(['exiftool', '-IPTC:Keywords', '-XMP:Subject', photo])
+				if tags_check:
+					print '%s already has tag data. MERGING to avoid overwriting.' % photo
+					old_tags = {}
+					merged_tags = {}
+					for t in tags:
+						merged_tags[t] = 1
+					for line in tags_check.split('\n'):
+						for t in (line.split(': ')[-1]).split(', '):
+							if (t):
+								merged_tags[t] = 1
+								old_tags[t] = 1
+					if len(set(old_tags.keys()) ^ set(merged_tags.keys())) == 0:
+						print '%s already has all merged tag data. SKIPPING to avoid overwriting.' % photo
+					else:
+						print '%s is missing some tag data. Writing MERGED tags.' % photo
+						print 'Tags in Exif  : %s' % old_tags.keys()
+						print 'Tags on Flickr: %s' % tags
+						print 'Merged tags   : %s' % merged_tags.keys()
+						# TODO Write all changes at once
+						subprocess.check_output(['exiftool', '-sep',',', '-overwrite_original_in_place', '-IPTC:Keywords='+','.join(merged_tags.keys())+'', '-XMP:Subject='+','.join(merged_tags.keys())+'', photo])
 				else:
 					print '%s writing tag data: %s' % (photo, tags)
+					# TODO Write all changes at once
 					subprocess.check_output(['exiftool', '-sep',',', '-overwrite_original_in_place', '-IPTC:Keywords='+','.join(tags)+'', '-XMP:Subject='+','.join(tags)+'', photo])
 			else:
 				print '%s no tag data found.' % photo

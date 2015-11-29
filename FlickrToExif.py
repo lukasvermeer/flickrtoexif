@@ -14,6 +14,7 @@ import argparse
 import subprocess
 import flickrapi
 import re
+import os
 
 api_key = 'a1dd0b738929c7da854234add4f6580c'
 api_secret = '0769e4c49cea4ca0'
@@ -55,12 +56,12 @@ for photo in args.__dict__['photos']:
 			if (t):
 				if subprocess.check_output(['exiftool','-XMP:Description','-IPTC:Caption-Abstract',photo]):
 					print '%s already has title data. SKIPPING to avoid overwriting.' % photo
-				elif machine_title.match(t):
+				elif machine_title.match(t) or os.path.basename(photo).lower() == t.lower() or os.path.basename(photo).lower() == (t+'.jpg').lower():
 					print '%s looks like a machine generated title. SKIPPING.' % t
 				else:
 					print '%s writing title data: %s' % (photo, t)
 					# TODO Write all changes at once
-					subprocess.check_output(['exiftool','-overwrite_original_in_place','-XMP:Description="'+t+'"','-IPTC:Caption-Abstract="'+t+'"',photo])
+					# subprocess.check_output(['exiftool','-overwrite_original_in_place','-XMP:Description="'+t+'"','-IPTC:Caption-Abstract="'+t+'"',photo])
 			else:
 				print '%s no title data found.' % photo
 

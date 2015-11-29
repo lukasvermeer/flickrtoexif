@@ -61,7 +61,7 @@ for photo in args.__dict__['photos']:
 				else:
 					print '%s writing title data: %s' % (photo, t)
 					# TODO Write all changes at once
-					# subprocess.check_output(['exiftool','-overwrite_original_in_place','-XMP:Description="'+t+'"','-IPTC:Caption-Abstract="'+t+'"',photo])
+					subprocess.check_output(['exiftool','-overwrite_original_in_place','-XMP:Description="'+t+'"','-IPTC:Caption-Abstract="'+t+'"',photo])
 			else:
 				print '%s no title data found.' % photo
 
